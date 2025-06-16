@@ -4,19 +4,16 @@ import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import List, Dict, Any
-import os
 import requests
 import telebot
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, Update
 from flask import Flask, request
 
-# --- КОНФИГУРАЦИЯ ИЗ СРЕДЫ RENDER ---
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-
-if not TELEGRAM_BOT_TOKEN or not GEMINI_API_KEY:
-    raise ValueError("ОШИБКА: Ключи API не найдены в переменных окружения Render.")
+# --- ПРЯМАЯ КОНФИГУРАЦИЯ СОГЛАСНО ПРИКАЗУ ---
+TELEGRAM_BOT_TOKEN = "8000756578:AAGZNAA1YYTqYp_oKTuyw4bCuPswscIATcs"
+GEMINI_API_KEY = "AIzaSyDreKAHyvK7JYT6eLGAKR3faMFqtUWzyMc"
+# ----------------------------------------------
 
 MODEL_ID = "gemini-2.5-flash-preview-04-17"
 GENERATE_CONTENT_API = "streamGenerateContent"
