@@ -1,5 +1,6 @@
-pyTelegramBotAPI
-requests
-Flask
-gunicorn
-aiohttp
+telethon==1.34.0
+pyTelegramBotAPI==4.15.4
+Flask==3.0.3
+requests==2.32.3
+aiohttp==3.9.5
+gunicorn==22.0.0
