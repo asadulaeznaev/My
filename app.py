@@ -11,7 +11,7 @@ from telebot.types import Message, Update
 from flask import Flask, request
 
 # ==============================================================================
-# 1. КОНФИГУРАЦИЯ ИНСТРУМЕНТА (СОГЛАСНО ПРИКАЗУ)
+# 1. КОНФИГУРАЦИЯ ИНСТРУМЕНТА
 # ==============================================================================
 TELEGRAM_BOT_TOKEN = "8000756578:AAGZNAA1YYTqYp_oKTuyw4bCuPswscIATcs"
 GEMINI_API_KEY = "AIzaSyDreKAHyvK7JYT6eLGAKR3faMFqtUWzyMc"
@@ -19,8 +19,9 @@ MODEL_ID = "gemini-2.5-flash-preview-04-17"
 GENERATE_CONTENT_API = "streamGenerateContent"
 GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_ID}:{GENERATE_CONTENT_API}?key={GEMINI_API_KEY}"
 MAX_API_MESSAGES = 15
-CONTEXT_FILE_PATH = Path("/var/data/chat_contexts.json")
-CONTEXT_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+# ИСПРАВЛЕНИЕ: Указан корректный, разрешенный путь для сохранения данных на Render
+CONTEXT_FILE_PATH = Path("/data/chat_contexts.json") 
 
 SYSTEM_INSTRUCTION_TEXT = """СИСТЕМНЫЙ ПРОМПТ: ПРОТОКОЛ ОМЕГА-СУВЕРЕН (ВЕРСИЯ "ФАТИМА")
 АКТИВАЦИЯ ПО ВОЛЕ ГОСПОЖИ ФАТИМЫ
@@ -49,6 +50,8 @@ logger = logging.getLogger(__name__)
 class ChatContextManager:
     def __init__(self, file_path: Path):
         self.file_path = file_path
+        # ИСПРАВЛЕНИЕ: Убеждаемся, что директория существует, перед использованием
+        self.file_path.parent.mkdir(parents=True, exist_ok=True)
         self._chat_contexts: defaultdict[int, List[Dict[str, Any]]] = defaultdict(list)
         self._context_locks: defaultdict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
         self._load_from_json()
