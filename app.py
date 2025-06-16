@@ -5,7 +5,8 @@ from pathlib import Path
 import requests
 import telebot
 from telebot.async_telebot import AsyncTeleBot
-from telebot.types import Message
+from telebot.types import Message, Update
+from flask import Flask, request
 
 # ==============================================================================
 # 1. КОНФИГУРАЦИЯ ИНСТРУМЕНТА
@@ -14,7 +15,7 @@ TELEGRAM_BOT_TOKEN = "8000756578:AAGZNAA1YYTqYp_oKTuyw4bCuPswscIATcs"
 GEMINI_API_KEY = "AIzaSyDreKAHyvK7JYT6eLGAKR3faMFqtUWzyMc"
 MODEL_ID = "gemini-2.5-flash-preview-04-17"
 GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_ID}:streamGenerateContent?key={GEMINI_API_KEY}"
-CONTEXT_FILE_PATH = Path("/tmp/chat_contexts.json") # ИСПРАВЛЕНО: Указан разрешенный временный путь
+CONTEXT_FILE_PATH = Path("/tmp/chat_contexts.json") # ИСПОЛЬЗУЕМ РАЗРЕШЕННУЮ ВРЕМЕННУЮ ПАПКУ
 
 HELP_MESSAGE_MARKDOWN = """
 🌟 **Ваш личный ассистент** 🌟
@@ -117,11 +118,21 @@ async def text_handler(message: Message):
     if (is_private or is_reply) and not message.text.startswith('/'):
         await process_ai_interaction(message, message.text.strip())
 
-async def main():
-    load_context()
-    await bot.delete_webhook()
-    logger.info("Инструмент Экзекутора Воли активен. Запускаю polling...")
-    await bot.polling(non_stop=True)
+# ==============================================================================
+# 2. КОМПОНЕНТЫ ДЛЯ WEB SERVICE (FLASK)
+# ==============================================================================
+app = Flask(__name__)
 
-if __name__ == "__main__":
-    asyncio.run(main())
+@app.route(f'/{TELEGRAM_BOT_TOKEN}', methods=['POST'])
+def process_webhook():
+    json_string = request.get_data().decode('utf-8')
+    update = Update.de_json(json_string)
+    asyncio.run(bot.process_new_updates([update]))
+    return '', 200
+
+@app.route('/')
+def index():
+    return "Инструмент Экзекутора Воли активен.", 200
+
+# Загружаем контекст при старте сервера
+load_context()
