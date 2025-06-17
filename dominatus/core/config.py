@@ -4,6 +4,8 @@ class Config:
     BOT_TOKEN = "7669343401:AAGlmpa_R6qlLgUSbkzFwaauVehMiv2nePY"
     API_ID = 2040
     API_HASH = "b18441a1ff607e10a989891a5462e627"
+    
+    WEBAPP_URL = "https://my-820x.onrender.com"
 
     PARSER_MESSAGE_LIMIT = 5000
 
