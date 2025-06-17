@@ -1,7 +1,8 @@
 services:
-  - type: psql
+  - type: postgres
     name: dominatus-db
     plan: free
+
   - type: redis
     name: dominatus-redis
     plan: free
@@ -11,13 +12,12 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    # КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ ЗДЕСЬ:
     startCommand: gunicorn "dominatus.web.app:create_app()"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
       - fromService:
-          type: psql
+          type: postgres
           name: dominatus-db
           property: connectionString
       - fromService:
@@ -34,13 +34,12 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    # И ЗДЕСЬ:
     startCommand: celery -A dominatus.worker.tasks.celery_app worker --loglevel=info
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
       - fromService:
-          type: psql
+          type: postgres
           name: dominatus-db
           property: connectionString
       - fromService:
