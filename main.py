@@ -26,17 +26,18 @@ DB_PATH = 'data/citadel_monolith.db'
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# ИСПРАВЛЕНИЕ ЗДЕСЬ: Создаем директорию до любых других операций
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+
 # ==============================================================================
-# 2. КЛАСС УПРАВЛЕНИЯ БАЗОЙ ДАННЫХ (ИСПРАВЛЕН)
+# 2. КЛАСС УПРАВЛЕНИЯ БАЗОЙ ДАННЫХ
 # ==============================================================================
 class DatabaseManager:
-    # ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлен параметр db_path в конструктор
     def __init__(self, db_path):
         self.db_path = db_path
         self.logger = logging.getLogger(__name__)
 
     def _get_connection(self):
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         return sqlite3.connect(self.db_path, check_same_thread=False)
 
     def init_db(self):
@@ -109,7 +110,6 @@ class Parser:
                         async for message in self.client.iter_messages(dialog.id, limit=PARSER_MESSAGE_LIMIT):
                             if not hasattr(message, 'sender') or not message.sender or not isinstance(message.sender, User) or message.sender.bot: continue
                             
-                            # Исправлена ошибка получения ссылки для приватных групп
                             chat_username = f"c/{dialog.entity.id}" if hasattr(dialog.entity, 'id') else dialog.entity.username
                             msg_link = f"https://t.me/{chat_username}/{message.id}"
 
@@ -137,7 +137,7 @@ class Parser:
 # ==============================================================================
 # 4. ОБРАБОТЧИКИ БОТА И ВЕБ-СЕРВЕР
 # ==============================================================================
-db = DatabaseManager(DB_PATH) # Вызов теперь корректен
+db = DatabaseManager(DB_PATH)
 bot = TeleBot(BOT_TOKEN)
 parser = Parser(API_ID, API_HASH, db)
 server = Flask(__name__)
