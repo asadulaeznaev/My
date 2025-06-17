@@ -6,6 +6,9 @@ services:
   - type: redis
     name: dominatus-redis
     plan: free
+    ipAllowList:
+      - ip: 0.0.0.0/0
+        description: Allow all internal
 
   - type: web
     name: dominatus-web
@@ -16,18 +19,21 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
-      - fromService:
-          type: psql
+      - key: DATABASE_URL
+        fromService:
+          type: database
           name: dominatus-db
           property: connectionString
-      - fromService:
+      - key: REDIS_URL
+        fromService:
           type: redis
           name: dominatus-redis
           property: connectionString
-      - fromService:
+      - key: WEBAPP_URL
+        fromService:
           type: web
           name: dominatus-web
-          property: url
+          property: externalUrl
 
   - type: worker
     name: dominatus-worker
@@ -38,11 +44,13 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
-      - fromService:
-          type: psql
+      - key: DATABASE_URL
+        fromService:
+          type: database
           name: dominatus-db
           property: connectionString
-      - fromService:
+      - key: REDIS_URL
+        fromService:
           type: redis
           name: dominatus-redis
           property: connectionString
