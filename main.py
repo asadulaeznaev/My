@@ -17,7 +17,7 @@ from telethon.tl.types import User
 BOT_TOKEN = "8124170502:AAGu0S-gdIJa8Mk-TXa74pIs6_aG8FyWS_E"
 API_ID = 2040
 API_HASH = "b18441a1ff607e10a989891a5462e627"
-# ADMIN_ID УДАЛЕН - ПРОВЕРКА БОЛЬШЕ НЕ НУЖНА
+# ADMIN_ID ПОЛНОСТЬЮ УДАЛЕН. БОТ ПУБЛИЧНЫЙ.
 
 PARSER_MESSAGE_LIMIT = 300
 PARSER_CHAT_BLACKLIST = ['новости', 'ставки', 'крипто', 'news', 'crypto', 'bets']
@@ -34,7 +34,6 @@ os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 class DatabaseManager:
     def __init__(self, db_path):
         self.db_path = db_path
-        self.logger = logging.getLogger(__name__)
 
     def _get_connection(self):
         return sqlite3.connect(self.db_path, check_same_thread=False)
@@ -134,7 +133,7 @@ class Parser:
         threading.Thread(target=self._run_in_new_loop, daemon=True).start()
 
 # ==============================================================================
-# 4. ОБРАБОТЧИКИ БОТА И ВЕБ-СЕРВЕР (ПУБЛИЧНЫЙ ДОСТУП)
+# 4. ОБРАБОТЧИКИ БОТА И ВЕБ-СЕРВЕР
 # ==============================================================================
 db = DatabaseManager(DB_PATH)
 bot = TeleBot(BOT_TOKEN)
@@ -149,9 +148,7 @@ def process_webhook():
 
 @server.route('/')
 def index():
-    return "Экзекутор Воли: Протокол Монолит-Публичный активен.", 200
-
-# ФУНКЦИЯ _is_admin УДАЛЕНА
+    return "Экзекутор Воли: Протокол Публичный Монолит активен.", 200
 
 def _format_message(data, page, total):
     return (
@@ -175,25 +172,25 @@ def _create_navigation_markup(page, total, user_id):
     markup.row(*row)
     return markup
 
-@bot.message_handler(commands=['start']) # func=_is_admin УДАЛЕН
-def send_welcome(message): bot.reply_to(message, "Бот активен. Введите ID пользователя для поиска.")
+@bot.message_handler(commands=['start'])
+def send_welcome(message): bot.reply_to(message, "Бот для поиска по базе данных активен. Введите ID цели.")
 
-@bot.message_handler(commands=['stats']) # func=_is_admin УДАЛЕН
+@bot.message_handler(commands=['stats'])
 def send_stats(message):
     total, unique = db.get_stats()
     bot.send_message(message.chat.id, f"**Статистика БД**\n- Всего сообщений: `{total}`\n- Уникальных пользователей: `{unique}`", parse_mode="Markdown")
 
-@bot.message_handler(func=lambda msg: msg.text and msg.text.isdigit()) # func=_is_admin УДАЛЕН
+@bot.message_handler(func=lambda msg: msg.text and msg.text.isdigit())
 def handle_user_id(message):
     results = db.search_user(int(message.text))
     if not results:
-        bot.reply_to(message, "Пользователь не найден в базе данных.")
+        bot.reply_to(message, "Цель не найдена в базе данных.")
         return
     page, total = 0, len(results)
     bot.send_message(message.chat.id, _format_message(results[page], page, total), 
                       reply_markup=_create_navigation_markup(page, total, int(message.text)), parse_mode="Markdown")
 
-@bot.callback_query_handler(func=lambda call: True) # func=_is_admin УДАЛЕН И ЗАМЕНЕН
+@bot.callback_query_handler(func=lambda call: True)
 def handle_pagination(call):
     try:
         action = call.data.split("_")[1]
@@ -213,21 +210,22 @@ def handle_pagination(call):
     except Exception as e:
         logger.error(f"Общая ошибка пагинации: {e}")
 
-def guardian_thread_func():
-    render_url = os.environ.get('RENDER_EXTERNAL_URL')
-    if not render_url:
-        logger.warning("'Страж' неактивен: RENDER_EXTERNAL_URL не найдена.")
-        return
-    while True:
-        time.sleep(15)
-        try: requests.get(render_url, timeout=10)
-        except Exception: pass
-        time.sleep(10 * 60)
-
 # ==============================================================================
 # 5. ИНИЦИАЛИЗАЦИЯ
 # ==============================================================================
-db.init_db()
-parser.start()
-threading.Thread(target=guardian_thread_func, daemon=True).start()
-logger.info("Все системы инициализированы и готовы к запуску через Gunicorn.")
+def startup_background_tasks():
+    logger.info("Запуск фоновых задач (Парсер и Страж)...")
+    db.init_db()
+    parser.start()
+    
+    render_url = os.environ.get('RENDER_EXTERNAL_URL')
+    if render_url:
+        def guardian_thread_func():
+            while True:
+                time.sleep(10 * 60)
+                try: requests.get(render_url, timeout=10)
+                except Exception: pass
+        threading.Thread(target=guardian_thread_func, daemon=True).start()
+
+threading.Timer(5.0, startup_background_tasks).start()
+logger.info("Веб-сервер инициализирован и готов к запуску через Gunicorn.")
