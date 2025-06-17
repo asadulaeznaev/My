@@ -11,6 +11,7 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
+    # КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ ЗДЕСЬ:
     startCommand: gunicorn "dominatus.web.app:create_app()"
     envVars:
       - key: PYTHON_VERSION
@@ -33,6 +34,7 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
+    # И ЗДЕСЬ:
     startCommand: celery -A dominatus.worker.tasks.celery_app worker --loglevel=info
     envVars:
       - key: PYTHON_VERSION
