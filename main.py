@@ -17,7 +17,7 @@ from telethon.tl.types import User
 BOT_TOKEN = "8124170502:AAGu0S-gdIJa8Mk-TXa74pIs6_aG8FyWS_E"
 API_ID = 2040
 API_HASH = "b18441a1ff607e10a989891a5462e627"
-ADMIN_ID = 7926898132 # ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ TELEGRAM ID
+# ADMIN_ID УДАЛЕН - ПРОВЕРКА БОЛЬШЕ НЕ НУЖНА
 
 PARSER_MESSAGE_LIMIT = 300
 PARSER_CHAT_BLACKLIST = ['новости', 'ставки', 'крипто', 'news', 'crypto', 'bets']
@@ -26,7 +26,6 @@ DB_PATH = 'data/citadel_monolith.db'
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# ИСПРАВЛЕНИЕ ЗДЕСЬ: Создаем директорию до любых других операций
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 # ==============================================================================
@@ -135,7 +134,7 @@ class Parser:
         threading.Thread(target=self._run_in_new_loop, daemon=True).start()
 
 # ==============================================================================
-# 4. ОБРАБОТЧИКИ БОТА И ВЕБ-СЕРВЕР
+# 4. ОБРАБОТЧИКИ БОТА И ВЕБ-СЕРВЕР (ПУБЛИЧНЫЙ ДОСТУП)
 # ==============================================================================
 db = DatabaseManager(DB_PATH)
 bot = TeleBot(BOT_TOKEN)
@@ -150,10 +149,9 @@ def process_webhook():
 
 @server.route('/')
 def index():
-    return "Экзекутор Воли: Протокол Монолит-Экзекутор активен.", 200
+    return "Экзекутор Воли: Протокол Монолит-Публичный активен.", 200
 
-def _is_admin(message):
-    return message.from_user.id == ADMIN_ID
+# ФУНКЦИЯ _is_admin УДАЛЕНА
 
 def _format_message(data, page, total):
     return (
@@ -177,25 +175,25 @@ def _create_navigation_markup(page, total, user_id):
     markup.row(*row)
     return markup
 
-@bot.message_handler(commands=['start'], func=_is_admin)
-def send_welcome(message): bot.reply_to(message, "Протокол Монолит-Экзекутор активен. Введите ID цели.")
+@bot.message_handler(commands=['start']) # func=_is_admin УДАЛЕН
+def send_welcome(message): bot.reply_to(message, "Бот активен. Введите ID пользователя для поиска.")
 
-@bot.message_handler(commands=['stats'], func=_is_admin)
+@bot.message_handler(commands=['stats']) # func=_is_admin УДАЛЕН
 def send_stats(message):
     total, unique = db.get_stats()
     bot.send_message(message.chat.id, f"**Статистика БД**\n- Всего сообщений: `{total}`\n- Уникальных пользователей: `{unique}`", parse_mode="Markdown")
 
-@bot.message_handler(func=lambda msg: _is_admin(msg) and msg.text and msg.text.isdigit())
+@bot.message_handler(func=lambda msg: msg.text and msg.text.isdigit()) # func=_is_admin УДАЛЕН
 def handle_user_id(message):
     results = db.search_user(int(message.text))
     if not results:
-        bot.reply_to(message, "Цель не найдена в базе данных.")
+        bot.reply_to(message, "Пользователь не найден в базе данных.")
         return
     page, total = 0, len(results)
     bot.send_message(message.chat.id, _format_message(results[page], page, total), 
                       reply_markup=_create_navigation_markup(page, total, int(message.text)), parse_mode="Markdown")
 
-@bot.callback_query_handler(func=_is_admin)
+@bot.callback_query_handler(func=lambda call: True) # func=_is_admin УДАЛЕН И ЗАМЕНЕН
 def handle_pagination(call):
     try:
         action = call.data.split("_")[1]
