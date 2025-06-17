@@ -1,8 +1,8 @@
-services:
-  - type: postgres
-    name: dominatus-db
+databases:
+  - name: dominatus-db
     plan: free
 
+services:
   - type: redis
     name: dominatus-redis
     plan: free
@@ -17,7 +17,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.11
       - fromService:
-          type: postgres
+          type: psql
           name: dominatus-db
           property: connectionString
       - fromService:
@@ -39,7 +39,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.11
       - fromService:
-          type: postgres
+          type: psql
           name: dominatus-db
           property: connectionString
       - fromService:
