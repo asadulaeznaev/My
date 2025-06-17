@@ -23,17 +23,21 @@ PARSER_MESSAGE_LIMIT = 300
 PARSER_CHAT_BLACKLIST = ['новости', 'ставки', 'крипто', 'news', 'crypto', 'bets']
 DB_PATH = 'data/citadel_monolith.db'
 
-# Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # ==============================================================================
-# 2. КЛАСС УПРАВЛЕНИЯ БАЗОЙ ДАННЫХ
+# 2. КЛАСС УПРАВЛЕНИЯ БАЗОЙ ДАННЫХ (ИСПРАВЛЕН)
 # ==============================================================================
 class DatabaseManager:
+    # ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлен параметр db_path в конструктор
+    def __init__(self, db_path):
+        self.db_path = db_path
+        self.logger = logging.getLogger(__name__)
+
     def _get_connection(self):
-        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-        return sqlite3.connect(DB_PATH, check_same_thread=False)
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        return sqlite3.connect(self.db_path, check_same_thread=False)
 
     def init_db(self):
         conn = self._get_connection()
@@ -104,7 +108,12 @@ class Parser:
                         if not (dialog.is_group or dialog.is_channel): continue
                         async for message in self.client.iter_messages(dialog.id, limit=PARSER_MESSAGE_LIMIT):
                             if not hasattr(message, 'sender') or not message.sender or not isinstance(message.sender, User) or message.sender.bot: continue
-                            user, msg_link = message.sender, f"https://t.me/c/{dialog.id if dialog.is_channel else -dialog.id}/{message.id}"
+                            
+                            # Исправлена ошибка получения ссылки для приватных групп
+                            chat_username = f"c/{dialog.entity.id}" if hasattr(dialog.entity, 'id') else dialog.entity.username
+                            msg_link = f"https://t.me/{chat_username}/{message.id}"
+
+                            user = message.sender
                             self.db_manager.save_message({
                                 "user_id": user.id, "first_name": user.first_name, "last_name": user.last_name,
                                 "username": user.username, "phone": user.phone, "message_date": message.date.isoformat(),
@@ -128,10 +137,10 @@ class Parser:
 # ==============================================================================
 # 4. ОБРАБОТЧИКИ БОТА И ВЕБ-СЕРВЕР
 # ==============================================================================
-db = DatabaseManager(DB_PATH)
+db = DatabaseManager(DB_PATH) # Вызов теперь корректен
 bot = TeleBot(BOT_TOKEN)
 parser = Parser(API_ID, API_HASH, db)
-server = Flask(__name__)  # Имя переменной 'server' важно для Gunicorn
+server = Flask(__name__)
 
 @server.route(f'/{BOT_TOKEN}', methods=['POST'])
 def process_webhook():
