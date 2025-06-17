@@ -1,0 +1,47 @@
+services:
+  - type: psql
+    name: dominatus-db
+    plan: free
+  - type: redis
+    name: dominatus-redis
+    plan: free
+
+  - type: web
+    name: dominatus-web
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn "dominatus.web.app:create_app()"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - fromService:
+          type: psql
+          name: dominatus-db
+          property: connectionString
+      - fromService:
+          type: redis
+          name: dominatus-redis
+          property: connectionString
+      - fromService:
+          type: web
+          name: dominatus-web
+          property: url
+
+  - type: worker
+    name: dominatus-worker
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A dominatus.worker.tasks.celery_app worker --loglevel=info
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - fromService:
+          type: psql
+          name: dominatus-db
+          property: connectionString
+      - fromService:
+          type: redis
+          name: dominatus-redis
+          property: connectionString
