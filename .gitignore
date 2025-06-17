@@ -1,22 +1,7 @@
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
 
-
-venv/
-.venv/
-env/
-.env/
-
-
-*.session
-!data/parser_session.session
-
-
-.idea/
-.vscode/
+data/
 
 
 .env
-.env.*
