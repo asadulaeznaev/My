@@ -12,7 +12,7 @@ from telethon import TelegramClient
 from telethon.tl.types import User
 
 class Config:
-    BOT_TOKEN = "8124170502:AAGu0S-gdIJa8Mk-TXa74pIs6_aG8FyWS_E"
+    BOT_TOKEN = "7669343401:AAGlmpa_R6qlLgUSbkzFwaauVehMiv2nePY"
     API_ID = 2040
     API_HASH = "b18441a1ff607e10a989891a5462e627"
     PARSER_MESSAGE_LIMIT = int(os.environ.get('PARSER_MESSAGE_LIMIT', 10000))
