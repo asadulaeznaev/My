@@ -7,7 +7,7 @@ services:
     name: dominatus-redis
     plan: free
     ipAllowList:
-      - cidr: 0.0.0.0/0
+      - source: 0.0.0.0/0
         description: Allow all internal
 
   - type: web
